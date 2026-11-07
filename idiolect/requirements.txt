@@ -1,0 +1,7 @@
+spacy>=3.7,<4
+pymupdf>=1.24
+python-docx>=1.1
+numpy>=1.26
+scikit-learn>=1.4
+wordfreq>=3.1
+pytest>=8

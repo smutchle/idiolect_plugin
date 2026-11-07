@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Single entry point for the plugin's Python tools.
+#   idiolect profile|score|retrieve|brief|rewrite|fidelity|list|extract|setup [args...]
+set -euo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+HOME_DIR="${IDIOLECT_HOME:-$HOME/.idiolect}"
+PY="${IDIOLECT_PYTHON:-$HOME_DIR/venv/bin/python}"
+cmd="${1:-help}"; shift || true
+if [ "$cmd" = "setup" ]; then exec bash "$HERE/../setup.sh" "$@"; fi
+if [ ! -x "$PY" ]; then
+  echo "idiolect: Python environment not found at $PY." >&2
+  echo "Run once:  bash \"$HERE/../setup.sh\"   (or: $HERE/idiolect setup)" >&2
+  exit 3
+fi
+case "$cmd" in
+  profile)  exec "$PY" "$HERE/voiceprofile.py" "$@" ;;
+  score)    exec "$PY" "$HERE/score.py" "$@" ;;
+  retrieve) exec "$PY" "$HERE/retrieve.py" "$@" ;;
+  brief)    exec "$PY" "$HERE/brief.py" "$@" ;;
+  rewrite)  exec "$PY" "$HERE/rewrite.py" "$@" ;;
+  fidelity) exec "$PY" "$HERE/fidelity.py" "$@" ;;
+  list)     exec "$PY" "$HERE/voices.py" "$@" ;;
+  humanize) exec "$PY" "$HERE/humanize.py" "$@" ;;
+  tells)    exec "$PY" "$HERE/tells.py" "$@" ;;
+  extract)  exec "$PY" "$HERE/extract.py" "$@" ;;
+  *) echo "usage: idiolect {profile|score|retrieve|brief|rewrite|humanize|tells|fidelity|list|extract|setup} [args]" >&2; exit 2 ;;
+esac

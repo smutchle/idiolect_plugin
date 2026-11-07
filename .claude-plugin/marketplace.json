@@ -1,0 +1,12 @@
+{
+  "name": "idiolect-local",
+  "owner": { "name": "Scott Mutchler" },
+  "description": "Local marketplace for the idiolect plugin",
+  "plugins": [
+    {
+      "name": "idiolect",
+      "source": "./idiolect",
+      "description": "Learn an author's voice from their documents and rewrite text in it; remove AI-writing tells."
+    }
+  ]
+}
