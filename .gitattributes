@@ -1,0 +1,7 @@
+# Keep LF line endings everywhere: bash scripts break with CRLF on Windows checkouts.
+* text=auto eol=lf
+*.sh text eol=lf
+idiolect/scripts/idiolect text eol=lf
+*.png binary
+*.pdf binary
+*.docx binary

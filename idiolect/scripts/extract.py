@@ -549,9 +549,9 @@ def extract(path, for_rewrite: bool = False) -> Document:
     elif ext == ".docx":
         blocks = read_docx(path, doc)
     elif ext in (".md", ".markdown"):
-        blocks = read_markdown(path.read_text(errors="replace"), doc, keep=for_rewrite)
+        blocks = read_markdown(path.read_text(errors="replace", encoding="utf-8"), doc, keep=for_rewrite)
     else:
-        blocks = read_text(path.read_text(errors="replace"), doc)
+        blocks = read_text(path.read_text(errors="replace", encoding="utf-8"), doc)
     if not for_rewrite:
         blocks = [b for b in blocks if b.kind != "protected"]
     blocks = clean_document(doc, blocks, keep=for_rewrite)

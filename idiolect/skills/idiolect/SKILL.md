@@ -10,7 +10,7 @@ allowed-tools: Bash(${CLAUDE_PLUGIN_ROOT}/scripts/idiolect *), Read, Write, Edit
 Python measures; you write. Never estimate a statistic yourself (sentence lengths, rates,
 "this sounds closer now"). Always run the scorer and act on its numbers.
 
-`IDL` below means `${CLAUDE_PLUGIN_ROOT}/scripts/idiolect`.
+`IDL` below means `"${CLAUDE_PLUGIN_ROOT}/scripts/idiolect"`. Always type it with the double quotes, exactly as shown: on Windows the plugin path can contain backslashes, which bash mangles when unquoted. Pass file paths with forward slashes or in double quotes too (`C:/Users/me/draft.md`).
 Feature meanings and how to act on each gap: `${CLAUDE_PLUGIN_ROOT}/skills/idiolect/references/feature-guide.md`.
 AI tells: the humanizer catalog (`references/humanizer-patterns.md`, vendored from blader/humanizer
 v3.1.0, MIT - read its first section, "How idiolect applies this catalog") and the detector/scoring

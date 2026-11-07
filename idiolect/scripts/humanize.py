@@ -153,20 +153,20 @@ def cmd_prepare(a) -> dict:
     todo = []
     for ch in chunks:
         text = rw.chunk_text(blocks, ch)
-        (run / "chunks" / f"{ch['id']}.source.md").write_text(text + "\n")
+        (run / "chunks" / f"{ch['id']}.source.md").write_text(text + "\n", encoding="utf-8")
         hits = tells.scan_blocks(rw.chunk_blocks_with_heading(blocks, ch))
         lengths = vp.counts_from_text(text)["sent_lens"]
         ch["wrapper_only"] = rw.wrapper_only_paras(blocks, ch)
         tmd = rw.tells_section(hits, ch["words"], {}, st["allow_cuts"], ch["wrapper_only"])
-        (run / "chunks" / f"{ch['id']}.tells.md").write_text(tmd + "\n")
+        (run / "chunks" / f"{ch['id']}.tells.md").write_text(tmd + "\n", encoding="utf-8")
         if needs_work(hits, lengths):
-            (run / "prompts" / "r1" / f"{ch['id']}.md").write_text(prompt(run, st, ch, text, tmd, lengths))
+            (run / "prompts" / "r1" / f"{ch['id']}.md").write_text(prompt(run, st, ch, text, tmd, lengths), encoding="utf-8")
             todo.append(ch["id"])
         else:
-            (run / "rewrites" / f"{ch['id']}.md").write_text(text + "\n")
+            (run / "rewrites" / f"{ch['id']}.md").write_text(text + "\n", encoding="utf-8")
             st["untouched"].append(ch["id"])
     md0 = rw.assemble_markdown(blocks, {})
-    (run / "rounds" / "0" / "document.md").write_text(md0)
+    (run / "rounds" / "0" / "document.md").write_text(md0, encoding="utf-8")
     hits0, w0, l0 = doc_tells(md0)
     st["rounds"].append(round_record(0, hits0, w0, l0))
     write_json(run / "state.json", st)
@@ -187,7 +187,7 @@ def cmd_assemble(a) -> dict:
         if not p.exists():
             missing.append(ch["id"])
             continue
-        paras = rw.split_paragraphs(p.read_text())
+        paras = rw.split_paragraphs(p.read_text(encoding="utf-8"))
         if len(paras) != ch["paragraphs"]:
             bad.append(f"{ch['id']}: {len(paras)} paragraphs, source has {ch['paragraphs']}")
             continue
@@ -207,7 +207,7 @@ def cmd_assemble(a) -> dict:
     for ch in st["chunks"]:
         shutil.copy(run / "rewrites" / f"{ch['id']}.md", rdir / "rewrites" / f"{ch['id']}.md")
     md = rw.assemble_markdown(blocks, replacement)
-    (rdir / "document.md").write_text(md)
+    (rdir / "document.md").write_text(md, encoding="utf-8")
     hits, words, lengths = doc_tells(md)
     rec = round_record(rnd, hits, words, lengths)
     st["rounds"].append(rec)
@@ -245,7 +245,7 @@ def cmd_assemble(a) -> dict:
     pdir.mkdir(parents=True, exist_ok=True)
     targets = []
     for ch in st["chunks"]:
-        cur = (run / "rewrites" / f"{ch['id']}.md").read_text().strip()
+        cur = (run / "rewrites" / f"{ch['id']}.md").read_text(encoding="utf-8").strip()
         cur_blocks = ex.read_markdown(cur, ex.Document("x"), keep=True)
         first = ch["blocks"][0]
         if first > 0 and blocks[first - 1].kind == "heading":
@@ -253,10 +253,10 @@ def cmd_assemble(a) -> dict:
         ch_hits = tells.scan_blocks(cur_blocks)
         lengths_c = vp.counts_from_text(cur)["sent_lens"]
         if needs_work(ch_hits, lengths_c):
-            src = (run / "chunks" / f"{ch['id']}.source.md").read_text().strip()
+            src = (run / "chunks" / f"{ch['id']}.source.md").read_text(encoding="utf-8").strip()
             wo = [k for k, x in enumerate(rw.split_paragraphs(cur)) if k in ch.get("wrapper_only", []) and x.strip() != rw.CUT]
             tmd = rw.tells_section(ch_hits, len(cur.split()), {}, st["allow_cuts"], wo)
-            (pdir / f"{ch['id']}.md").write_text(prompt(run, st, ch, src, tmd, lengths_c, current=cur))
+            (pdir / f"{ch['id']}.md").write_text(prompt(run, st, ch, src, tmd, lengths_c, current=cur), encoding="utf-8")
             targets.append(ch["id"])
     write_json(run / "state.json", st)
     out.update({"status": "revise", "revise_chunks": targets, "prompts": str(pdir), "based_on_round": base,
@@ -298,13 +298,13 @@ def cmd_finalize(a) -> dict:
     blocks = rw.load_blocks(run)
     replacement = {}
     for ch in st["chunks"]:
-        paras = rw.split_paragraphs((run / "rewrites" / f"{ch['id']}.md").read_text())
+        paras = rw.split_paragraphs((run / "rewrites" / f"{ch['id']}.md").read_text(encoding="utf-8"))
         if len(paras) != ch["paragraphs"]:
             raise SystemExit(f"{ch['id']}: paragraph count changed")
         replacement.update(zip(ch["blocks"], paras))
     md = rw.assemble_markdown(blocks, replacement)
     (run / "final").mkdir(exist_ok=True)
-    (run / "final" / "document.md").write_text(md)
+    (run / "final" / "document.md").write_text(md, encoding="utf-8")
     hits, words, lengths = doc_tells(md)
     rec = round_record(st["best_round"], hits, words, lengths)       # includes post-loop fidelity fixes
     for i, r in enumerate(st["rounds"]):
@@ -312,9 +312,9 @@ def cmd_finalize(a) -> dict:
             st["rounds"][i] = rec
     out = rw.write_output(st, blocks, replacement, md)
     rep = render_report(run, st)
-    (run / "report.md").write_text(rep)
+    (run / "report.md").write_text(rep, encoding="utf-8")
     rep_out = out.with_name(out.stem + ".report.md")
-    rep_out.write_text(rep)
+    rep_out.write_text(rep, encoding="utf-8")
     write_json(run / "state.json", st)
     return {"output": str(out), "report": str(rep_out), "report_md": rep}
 

@@ -1,6 +1,6 @@
 {
   "name": "idiolect",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Build a stylometric profile of an author from a folder of their writing, then rewrite documents in that voice: measured with deterministic stylometry (function words, sentence rhythm, punctuation, syntax), revised against numeric gaps, and checked for fidelity to the source's meaning. Also removes AI-writing tells (blader/humanizer catalog) with or without a voice.",
   "author": { "name": "Scott Mutchler" },
   "license": "MIT",

@@ -174,11 +174,11 @@ def cmd_check(run: Path) -> dict:
     per_chunk, pair_files, total = {}, [], 0
     for ch in st["chunks"]:
         cid = ch["id"]
-        src = (run / "chunks" / f"{cid}.source.md").read_text()
+        src = (run / "chunks" / f"{cid}.source.md").read_text(encoding="utf-8")
         rp = run / "rewrites" / f"{cid}.md"
         if not rp.exists():
             raise SystemExit(f"missing rewrite for {cid}")
-        out = rp.read_text()
+        out = rp.read_text(encoding="utf-8")
         r = compare_texts(src, "\n\n".join(p for p in split_paragraphs(out) if p.strip() != "[CUT]"))
         if r["n_issues"]:
             per_chunk[cid] = r
@@ -192,7 +192,7 @@ def cmd_check(run: Path) -> dict:
             lines += ["(paragraph counts differ: compare the remaining text as a whole)", "",
                       "SOURCE (rest):", "\n\n".join(sp[len(op):]), "", "REWRITE (rest):", "\n\n".join(op[len(sp):])]
         pf = fdir / "pairs" / f"{cid}.md"
-        pf.write_text("\n".join(lines) + "\n")
+        pf.write_text("\n".join(lines) + "\n", encoding="utf-8")
         pair_files.append(str(pf))
     det = {"passed": total == 0, "n_issues": total, "chunks": per_chunk}
     write_json(fdir / "deterministic.json", det)
@@ -216,7 +216,7 @@ def _det_md(det: dict) -> list[str]:
 
 def cmd_record(run: Path, model_json: Path) -> dict:
     det = read_json(run / "fidelity" / "deterministic.json")
-    raw = model_json.read_text().strip()
+    raw = model_json.read_text(encoding="utf-8").strip()
     m = re.search(r"\[.*\]", raw, re.S)
     try:
         model = json.loads(m.group(0) if m else raw)

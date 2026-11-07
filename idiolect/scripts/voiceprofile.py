@@ -758,7 +758,7 @@ def reference_features(selection: dict) -> dict:
     ref_path = DATA_DIR / "reference_generic.md"
     if not ref_path.exists():
         return {}
-    c = counts_from_text(ref_path.read_text())
+    c = counts_from_text(ref_path.read_text(encoding="utf-8"))
     return compute_features(c, selection["function_words"],
                             [p["phrase"] for p in selection["phrases"]], selection["openers"])
 
@@ -924,10 +924,10 @@ def run_profile(paths, voice: str, genre: str = "general", write: bool = True,
         write_json(vd / "profile.json", prof)
         write_json(vd / "samples.json", {"names": names, "counts": [counts_to_json(c) for c in sample_counts]})
         ex_recs = build_exemplars(groups, names, prof["selection"]["function_words"][:EXEMPLAR_FW])
-        with open(vd / "exemplars.jsonl", "w") as fh:
+        with open(vd / "exemplars.jsonl", "w", encoding="utf-8") as fh:
             for r in ex_recs:
                 fh.write(json.dumps(r, ensure_ascii=False) + "\n")
-        (vd / "sources.txt").write_text("\n".join(meta["sources"]) + "\n")
+        (vd / "sources.txt").write_text("\n".join(meta["sources"]) + "\n", encoding="utf-8")
         log(f"[profile] wrote {vd} ({len(ex_recs)} exemplars)")
         if calibrate:
             import score
@@ -953,7 +953,7 @@ def main(argv=None):
     if a.add:
         src = voice_dir(a.voice, a.genre) / "sources.txt"
         if src.exists():
-            old = [l for l in src.read_text().splitlines() if l.strip()]
+            old = [l for l in src.read_text(encoding="utf-8").splitlines() if l.strip()]
             gone = [p for p in old if not Path(p).exists()]
             if gone:
                 log(f"[profile] {len(gone)} earlier source file(s) no longer exist and are dropped: {gone[:3]}")

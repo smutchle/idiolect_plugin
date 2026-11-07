@@ -135,7 +135,7 @@ def test_profile_directory_end_to_end(tmp_path):
     assert f["fw:the"]["reliability"] == "high" and len(f["fw:the"]["per_sample"]) == 8
     assert f["fw:the"]["between_sd"] > 0
     assert len(prof["selection"]["phrases"]) == vp.N_PHRASES
-    ex_recs = [json.loads(l) for l in (vd / "exemplars.jsonl").open()]
+    ex_recs = [json.loads(l) for l in (vd / "exemplars.jsonl").open(encoding="utf-8")]
     assert all(r["n_words"] >= 40 for r in ex_recs)
     assert {"role", "function", "masked", "fw", "text"} <= set(ex_recs[0])
     s = vp.summarize(prof)

@@ -9,13 +9,15 @@ allowed-tools: Bash(${CLAUDE_PLUGIN_ROOT}/scripts/idiolect *), Read, Write, Edit
 
 Arguments: `$ARGUMENTS`
 
-`IDL` = `${CLAUDE_PLUGIN_ROOT}/scripts/idiolect`. Pattern catalog and fixes:
+`IDL` = `"${CLAUDE_PLUGIN_ROOT}/scripts/idiolect"`. Always type it with the double quotes, exactly as shown: on Windows the plugin path can contain backslashes, which bash mangles when unquoted. Pattern catalog and fixes:
 `${CLAUDE_PLUGIN_ROOT}/skills/idiolect/references/humanizer-patterns.md` (read its first section,
 "How idiolect applies this catalog"). Detector/scoring summary: `references/ai-tells.md`.
 
 Parse: files and/or folders (expand folders to .md/.txt/.docx/.pdf, skipping `*.humanized.*` and
 `*.report.md`); `--strict` (fidelity first: reword instead of cut, see below); `--rounds N` (default 2);
 `--output-dir DIR`; `--report-only` (just list the tells: run `IDL tells <file>` for each and stop).
+
+On Windows, pass file and folder paths to the script with forward slashes or in double quotes: convert `C:\Users\me\docs` to `C:/Users/me/docs` (Python accepts both; bash mangles unquoted backslashes).
 
 If the user has a voice profile for this kind of text, suggest `/idiolect:voice-rewrite` instead:
 it removes the same tells, treats tells the author really uses as habits, and matches the voice.

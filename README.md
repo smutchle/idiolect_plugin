@@ -15,6 +15,10 @@ claude plugin install idiolect@idiolect-local --scope user
 bash ~/.claude/plugins/cache/idiolect-local/idiolect/*/setup.sh
 ```
 
+Works on Linux, macOS and Windows. On Windows, run these in **Git Bash** (from Git for Windows)
+with Python 3.10+ or `uv` installed; see the
+[Windows notes](idiolect/README.md#windows-git-bash-notes).
+
 Then type `/reload-plugins` in an open Claude Code session (new sessions load it automatically) and
 try `/idiolect:voice-list`.
 

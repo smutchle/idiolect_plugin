@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
-# Single entry point for the plugin's Python tools.
-#   idiolect profile|score|retrieve|brief|rewrite|fidelity|list|extract|setup [args...]
+# Single entry point for the plugin's Python tools (Linux, macOS, Windows Git Bash).
+#   idiolect profile|score|retrieve|brief|rewrite|humanize|tells|fidelity|list|extract|setup [args...]
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOME_DIR="${IDIOLECT_HOME:-$HOME/.idiolect}"
-PY="${IDIOLECT_PYTHON:-$HOME_DIR/venv/bin/python}"
+if [ -n "${IDIOLECT_PYTHON:-}" ]; then PY="$IDIOLECT_PYTHON"
+elif [ -x "$HOME_DIR/venv/bin/python" ]; then PY="$HOME_DIR/venv/bin/python"
+elif [ -x "$HOME_DIR/venv/Scripts/python.exe" ]; then PY="$HOME_DIR/venv/Scripts/python.exe"
+else PY=""; fi
+# UTF-8 everywhere (Windows consoles and file defaults are otherwise cp1252)
+export PYTHONUTF8=1 PYTHONIOENCODING=utf-8
 cmd="${1:-help}"; shift || true
 if [ "$cmd" = "setup" ]; then exec bash "$HERE/../setup.sh" "$@"; fi
-if [ ! -x "$PY" ]; then
-  echo "idiolect: Python environment not found at $PY." >&2
-  echo "Run once:  bash \"$HERE/../setup.sh\"   (or: $HERE/idiolect setup)" >&2
+if [ -z "$PY" ] || [ ! -x "$PY" ]; then
+  echo "idiolect: Python environment not found in $HOME_DIR/venv." >&2
+  echo "Run once:  bash \"$HERE/../setup.sh\"   (or: \"$HERE/idiolect\" setup)" >&2
   exit 3
 fi
 case "$cmd" in
@@ -18,10 +23,10 @@ case "$cmd" in
   retrieve) exec "$PY" "$HERE/retrieve.py" "$@" ;;
   brief)    exec "$PY" "$HERE/brief.py" "$@" ;;
   rewrite)  exec "$PY" "$HERE/rewrite.py" "$@" ;;
-  fidelity) exec "$PY" "$HERE/fidelity.py" "$@" ;;
-  list)     exec "$PY" "$HERE/voices.py" "$@" ;;
   humanize) exec "$PY" "$HERE/humanize.py" "$@" ;;
   tells)    exec "$PY" "$HERE/tells.py" "$@" ;;
+  fidelity) exec "$PY" "$HERE/fidelity.py" "$@" ;;
+  list)     exec "$PY" "$HERE/voices.py" "$@" ;;
   extract)  exec "$PY" "$HERE/extract.py" "$@" ;;
   *) echo "usage: idiolect {profile|score|retrieve|brief|rewrite|humanize|tells|fidelity|list|extract|setup} [args]" >&2; exit 2 ;;
 esac

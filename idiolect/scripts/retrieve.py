@@ -121,7 +121,7 @@ def load_bank(voice: str, genre: str = "general") -> Bank:
     vd = voice_dir(voice, genre)
     if not (vd / "exemplars.jsonl").exists():
         raise SystemExit(f"no exemplar bank at {vd}; run voiceprofile.py first")
-    recs = [json.loads(l) for l in (vd / "exemplars.jsonl").open() if l.strip()]
+    recs = [json.loads(l) for l in (vd / "exemplars.jsonl").open(encoding="utf-8") if l.strip()]
     prof = read_json(vd / "profile.json")
     return Bank(recs, prof["selection"]["function_words"][:vp.EXEMPLAR_FW])
 

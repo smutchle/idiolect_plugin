@@ -19,7 +19,7 @@ asked to judge statistics itself.
 
 ## Contents
 
-- [Install](#install)
+- [Install](#install) (Linux, macOS, [Windows via Git Bash](#windows-git-bash-notes))
 - [Quick start](#quick-start)
 - [Commands and examples](#commands-and-examples)
   - [/idiolect:voice-profile](#idiolectvoice-profile--build-a-voice)
@@ -46,6 +46,46 @@ asked to judge statistics itself.
 - Python 3.10 or newer, and either [`uv`](https://docs.astral.sh/uv/) (recommended) or the standard
   `venv` + `pip`.
 - Network access once, for the setup step. After that nothing calls the network or a paid API.
+- **Windows:** [Git for Windows](https://git-scm.com/download/win), which provides **Git Bash**
+  (Claude Code on Windows uses it too). Run every shell command in this README in Git Bash, not in
+  PowerShell or cmd. See [Windows (Git Bash) notes](#windows-git-bash-notes) before installing.
+
+### Windows (Git Bash) notes
+
+The plugin works on Windows through Git Bash. Everything below is handled for you by the scripts;
+it is listed so nothing surprises you.
+
+1. **Install Python** from [python.org](https://www.python.org/downloads/windows/) and tick
+   *"Add python.exe to PATH"* in the installer, **or** install `uv` (recommended) from PowerShell:
+
+   ```powershell
+   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+   ```
+
+   Then open a **new** Git Bash window and check one of them works:
+
+   ```bash
+   uv --version        # or:
+   python --version    # or: py -3 --version
+   ```
+
+   `setup.sh` uses `uv` if present, otherwise the first of `python3`, `python`, `py -3` that is
+   3.10 or newer.
+2. **Where things live.** In Git Bash `~` is your Windows profile folder, so `~/.idiolect` is
+   `C:\Users\<you>\.idiolect`. The Python environment is `~/.idiolect/venv/Scripts/python.exe`
+   (Windows) instead of `~/.idiolect/venv/bin/python` (Linux/macOS); the `idiolect` script finds
+   either.
+3. **Paths in commands.** Use forward slashes. All of these work in Git Bash and in slash commands:
+   `~/Documents/papers`, `C:/Users/you/Documents/papers`, `/c/Users/you/Documents/papers`.
+   Avoid unquoted backslash paths (`C:\Users\...`): bash eats the backslashes. If you paste one into
+   a slash command, Claude converts it to forward slashes.
+4. **Line endings.** The repository forces LF line endings (`.gitattributes`), so the bash scripts
+   work after a normal `git clone` or plugin install. If you copy the files some other way and see
+   `$'\r': command not found`, see [Troubleshooting](#troubleshooting).
+5. **Text encoding.** The `idiolect` script runs Python in UTF-8 mode, and every file is read and
+   written as UTF-8, so curly quotes, accents and emoji are safe.
+6. **`IDIOLECT_HOME`** (optional): set it with forward slashes, e.g.
+   `export IDIOLECT_HOME="C:/Users/you/idiolect-data"` in `~/.bashrc`.
 
 ### Option A: install from GitHub (recommended)
 
@@ -57,7 +97,8 @@ bash ~/.claude/plugins/cache/idiolect-local/idiolect/*/setup.sh
 
 The first two lines add the marketplace and install the plugin (`--scope user` makes it available
 in every project; `--scope project` limits it to the current one). The third creates the Python
-environment (see Step 1 below for what it does). Then continue with [Step 3](#step-3-load-it).
+environment (see Step 1 below for what it does); the `*` matches the installed version folder and
+works the same in Git Bash on Windows. Then continue with [Step 3](#step-3-load-it).
 
 ### Option B: install from a local clone
 
@@ -77,7 +118,8 @@ idiolect_plugin/                     <- the marketplace (add this folder)
     └── README.md
 ```
 
-In the commands below, replace `/path/to/idiolect_plugin` with where that folder is on your machine.
+In the commands below, replace `/path/to/idiolect_plugin` with where that folder is on your machine
+(on Windows, e.g. `~/src/idiolect_plugin` or `C:/Users/you/src/idiolect_plugin`).
 
 #### Step 1: create the Python environment (once)
 
@@ -379,9 +421,10 @@ took it from 61 to 6, with 13 removals labelled `allowed_cut` and no meaning cha
 | Rewritten document | Next to the source (or `--output-dir`): `<stem>.<voice>.<ext>`; humanize: `<stem>.humanized.<ext>` |
 | Scorecard / report | `<stem>.<voice>.scorecard.md`; humanize: `<stem>.humanized.report.md` |
 | Working files for each run | `~/.idiolect/runs/<stem>-<voice>-<genre>-<timestamp>/` or `<stem>-humanize-<timestamp>/` (prompts, every round, scores, fidelity results) |
-| Python environment | `~/.idiolect/venv` |
+| Python environment | `~/.idiolect/venv` (Python at `venv/bin/python`; Windows: `venv/Scripts/python.exe`) |
 
-Set `IDIOLECT_HOME` to keep all of this somewhere other than `~/.idiolect`.
+Set `IDIOLECT_HOME` to keep all of this somewhere other than `~/.idiolect` (on Windows use forward
+slashes: `C:/Users/you/idiolect-data`). On Windows, `~` is `C:\Users\<you>`.
 
 ---
 
@@ -424,8 +467,14 @@ Everything the skills do is available as `scripts/idiolect <command>`, in the pl
 the installed copy under `~/.claude/plugins/cache/idiolect-local/idiolect/<version>/`. A handy alias:
 
 ```bash
+# Linux/macOS: add to ~/.bashrc or ~/.zshrc; Windows: add to ~/.bashrc in Git Bash
 alias idl=/path/to/idiolect_plugin/idiolect/scripts/idiolect
+# or, for the installed copy:
+alias idl="$(ls -d ~/.claude/plugins/cache/idiolect-local/idiolect/*/ | tail -1)scripts/idiolect"
 ```
+
+Always run the tools through `idl` (the `scripts/idiolect` wrapper): it picks the right Python and
+turns on UTF-8 mode, which matters on Windows.
 
 | Task | Command |
 |---|---|
@@ -439,6 +488,14 @@ alias idl=/path/to/idiolect_plugin/idiolect/scripts/idiolect
 | List voices | `idl list` |
 | See what extraction keeps and strips | `idl extract ~/writing/papers` (`--text` prints the cleaned text) |
 | Create the Python environment | `idl setup` |
+
+Examples on Windows (Git Bash):
+
+```bash
+idl profile --voice me --genre paper "C:/Users/you/Documents/My Papers"
+idl tells ~/Desktop/draft.docx
+idl score --voice me --genre paper /c/Users/you/Documents/intro_ai.md
+```
 
 The rewrite and humanize loops (`idl rewrite prepare|assemble|finalize`,
 `idl humanize prepare|assemble|finalize`, `idl fidelity check|record`) are designed to be driven by
@@ -474,6 +531,10 @@ Claude through the skills; each script's `--help` documents them.
 | A run reports `incomplete` / paragraph mismatch | Normal mid-run message: a rewritten chunk had a different number of paragraphs. Claude fixes it and re-assembles. |
 | The scorecard says FIDELITY FAIL | Read the listed differences; ask Claude to fix them, or edit the output yourself. Do not use the output until it passes. |
 | Edits to the plugin source have no effect | See [Updating](#updating). |
+| **Windows:** `$'\r': command not found` or `bad interpreter` | The scripts were checked out with CRLF line endings. Re-clone or reinstall (the repo's `.gitattributes` forces LF), or fix in place: `sed -i 's/\r$//' setup.sh scripts/idiolect`. |
+| **Windows:** `python3: command not found` | Fine if `setup.sh` still finishes: it falls back to `python` and `py -3`. If none works, install Python from python.org with "Add python.exe to PATH" ticked, or install `uv`, then open a new Git Bash window. |
+| **Windows:** `UnicodeDecodeError` / `charmap codec` | You ran a script with plain `python` instead of the `idiolect` wrapper. Use `idl ...`, or `export PYTHONUTF8=1` first. |
+| **Windows:** a path with spaces or backslashes is not found | Quote it and use forward slashes: `"C:/Users/you/My Documents/papers"`. |
 
 ---
 
@@ -518,6 +579,9 @@ cd /path/to/idiolect_plugin/idiolect
 ~/.idiolect/venv/bin/python -m pytest                # 77 tests, about 1 minute
 ~/.idiolect/venv/bin/python -m pytest -m "not slow"  # fast unit tests only
 claude plugin validate .
+
+# Windows (Git Bash)
+PYTHONUTF8=1 ~/.idiolect/venv/Scripts/python.exe -m pytest
 ```
 
 The test corpora are public-domain essays from Project Gutenberg (Emerson, *Essays: First Series*;

@@ -64,7 +64,7 @@ def test_relative_clause_is_not_a_triad():
 
 
 def test_human_prose_has_few_strong_tells():
-    text = (FIXTURES / "corpora" / "chesterton" / "chesterton_01.txt").read_text()[:20000]
+    text = (FIXTURES / "corpora" / "chesterton" / "chesterton_01.txt").read_text(encoding="utf-8")[:20000]
     hits, words = tells.scan_text(text)
     strong = sum(h.pattern in tells.STRONG for h in hits)
     assert 1000 * strong / words < 3.0
@@ -76,25 +76,25 @@ def test_wrapper_only_paragraphs_are_cuttable(tmp_path):
     src = tmp_path / "x.md"
     src.write_text("Great question! I hope this helps!\n\nThe study enrolled 40 people in 2020 and followed them "
                    "for a year, measuring sleep every week with a wrist sensor and a diary.\n\nLet me know if you "
-                   "want more!\n")
+                   "want more!\n", encoding="utf-8")
     res = hz.cmd_prepare(Namespace(source=str(src), rounds=1, allow_cuts=False, output=None,
                                    run_dir=str(tmp_path / "run")))
     run = Path(res["run_dir"])
     import json
-    st = json.loads((run / "state.json").read_text())
+    st = json.loads((run / "state.json").read_text(encoding="utf-8"))
     ch = st["chunks"][0]
     assert ch["wrapper_only"] == [0, 2]
-    assert "Paragraph 1 is entirely chatbot residue" in (run / "chunks" / "c001.tells.md").read_text()
+    assert "Paragraph 1 is entirely chatbot residue" in (run / "chunks" / "c001.tells.md").read_text(encoding="utf-8")
     # cutting a content paragraph without --allow-cuts is rejected
-    (run / "rewrites" / "c001.md").write_text("[CUT]\n\n[CUT]\n\n[CUT]\n")
+    (run / "rewrites" / "c001.md").write_text("[CUT]\n\n[CUT]\n\n[CUT]\n", encoding="utf-8")
     assert hz.cmd_assemble(Namespace(run_dir=str(run)))["status"] == "incomplete"
     (run / "rewrites" / "c001.md").write_text(
         "[CUT]\n\nThe study enrolled 40 people in 2020 and followed them for a year, measuring sleep every week "
-        "with a wrist sensor and a diary.\n\n[CUT]\n")
+        "with a wrist sensor and a diary.\n\n[CUT]\n", encoding="utf-8")
     out = hz.cmd_assemble(Namespace(run_dir=str(run)))
     assert out["status"] == "stop" and out["tells"]["strong"] == 0
     fin = hz.cmd_finalize(Namespace(run_dir=str(run)))
-    text = Path(fin["output"]).read_text()
+    text = Path(fin["output"]).read_text(encoding="utf-8")
     assert "hope this helps" not in text and "40 people" in text and "[CUT]" not in text
     assert "FIDELITY NOT CHECKED" in fin["report_md"]
 
@@ -108,10 +108,10 @@ def test_tells_section_respects_author_habits():
 
 def test_humanize_cli_defaults_to_cuts(tmp_path, capsys):
     src = tmp_path / "y.md"
-    src.write_text("In today's fast-paced world, the study enrolled 40 people. Ultimately, it matters.\n")
+    src.write_text("In today's fast-paced world, the study enrolled 40 people. Ultimately, it matters.\n", encoding="utf-8")
     hz.main(["prepare", str(src), "--run-dir", str(tmp_path / "r1")])
     import json
-    assert json.loads((tmp_path / "r1" / "state.json").read_text())["allow_cuts"] is True
+    assert json.loads((tmp_path / "r1" / "state.json").read_text(encoding="utf-8"))["allow_cuts"] is True
     hz.main(["prepare", str(src), "--strict", "--run-dir", str(tmp_path / "r2")])
-    assert json.loads((tmp_path / "r2" / "state.json").read_text())["allow_cuts"] is False
+    assert json.loads((tmp_path / "r2" / "state.json").read_text(encoding="utf-8"))["allow_cuts"] is False
     capsys.readouterr()

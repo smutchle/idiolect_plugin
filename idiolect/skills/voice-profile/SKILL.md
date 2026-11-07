@@ -15,16 +15,18 @@ files or directories; optional `--genre <name>` (default `general`; use e.g. `pa
 it); optional `--add` (merge these documents into the voice's existing sources and rebuild).
 If the voice name or paths are missing, ask for them.
 
+On Windows, pass file and folder paths to the script with forward slashes or in double quotes: convert `C:\Users\me\docs` to `C:/Users/me/docs` (Python accepts both; bash mangles unquoted backslashes).
+
 ## Steps
 
 1. Run (directories are searched recursively for .pdf/.docx/.md/.txt):
 
    ```
-   ${CLAUDE_PLUGIN_ROOT}/scripts/idiolect profile --voice <name> --genre <genre> [--add] <paths...>
+   "${CLAUDE_PLUGIN_ROOT}/scripts/idiolect" profile --voice <name> --genre <genre> [--add] <paths...>
    ```
 
    If it exits with code 3 the Python environment is missing: run
-   `${CLAUDE_PLUGIN_ROOT}/scripts/idiolect setup` once (it creates `~/.idiolect/venv` and
+   `"${CLAUDE_PLUGIN_ROOT}/scripts/idiolect" setup` once (it creates `~/.idiolect/venv` and
    downloads the spaCy model; this needs network access), then retry.
 
    The command extracts and cleans the text (stripping references, captions, equations,

@@ -47,7 +47,7 @@ We thank our funders.
 
 def test_markdown_academic_stripping(tmp_path):
     p = tmp_path / "paper.md"
-    p.write_text(PAPER_MD)
+    p.write_text(PAPER_MD, encoding="utf-8")
     doc = ex.extract(p)
     text = doc.text
     assert "Some paper" not in text and doc.stripped["references"] >= 2
@@ -70,7 +70,7 @@ def test_markdown_academic_stripping(tmp_path):
 def test_txt_wrapped_lines_and_headings(tmp_path):
     p = tmp_path / "essay.txt"
     p.write_text("THE TITLE\n\nThis is a wrapped\nparagraph of text that goes\non for a while.\n\n"
-                 "Another para-\ngraph here.\n")
+                 "Another para-\ngraph here.\n", encoding="utf-8")
     doc = ex.extract(p)
     assert [b.kind for b in doc.blocks] == ["heading", "para", "para"]
     assert doc.paragraphs[0].text == "This is a wrapped paragraph of text that goes on for a while."
@@ -116,11 +116,11 @@ def test_pdf_headers_footers_and_hyphenation(tmp_path):
 
 def test_collect_files_recurses_and_filters(tmp_path):
     (tmp_path / "a").mkdir()
-    (tmp_path / "a" / "one.md").write_text("x")
-    (tmp_path / "two.txt").write_text("y")
-    (tmp_path / "skip.csv").write_text("z")
+    (tmp_path / "a" / "one.md").write_text("x", encoding="utf-8")
+    (tmp_path / "two.txt").write_text("y", encoding="utf-8")
+    (tmp_path / "skip.csv").write_text("z", encoding="utf-8")
     (tmp_path / ".hidden").mkdir()
-    (tmp_path / ".hidden" / "three.md").write_text("w")
+    (tmp_path / ".hidden" / "three.md").write_text("w", encoding="utf-8")
     files = ex.collect_files([tmp_path])
     assert sorted(f.name for f in files) == ["one.md", "two.txt"]
 

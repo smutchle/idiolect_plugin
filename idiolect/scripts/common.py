@@ -32,12 +32,12 @@ def write_json(path: Path, obj) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(json.dumps(obj, indent=1, ensure_ascii=False))
+    tmp.write_text(json.dumps(obj, indent=1, ensure_ascii=False), encoding="utf-8")
     tmp.replace(path)
 
 
 def read_json(path: Path):
-    return json.loads(Path(path).read_text())
+    return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
 def log(*args) -> None:

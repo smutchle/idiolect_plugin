@@ -161,9 +161,9 @@ def write_output(st: dict, blocks, replacement: dict[int, str], md: str) -> Path
     if fmt == "docx" and st["format"] == "docx":
         write_docx(Path(st["source"]), out, blocks, replacement)
     elif fmt == "txt":
-        out.write_text(to_plain(md))
+        out.write_text(to_plain(md), encoding="utf-8")
     else:
-        out.write_text(md)
+        out.write_text(md, encoding="utf-8")
     return out
 
 
@@ -273,16 +273,16 @@ Rewrite the SOURCE passage so it reads as if the author wrote it. Study the exem
 connectives, punctuation, paragraph shape. Then express the source's exact content that way.
 
 ## Style brief
-{(run / 'brief.md').read_text().split(chr(10), 2)[2].strip()}
+{(run / 'brief.md').read_text(encoding="utf-8").split(chr(10), 2)[2].strip()}
 
 ## Rhythm target for this passage
 {rhythm_target(prof, ch['words'])}
 
 ## Exemplars (style only - never borrow their content, facts, names or topic words)
-{(run / 'chunks' / f"{ch['id']}.exemplars.md").read_text().strip()}
+{(run / 'chunks' / f"{ch['id']}.exemplars.md").read_text(encoding="utf-8").strip()}
 
 ## AI tells found in this passage (humanizer catalog; fix every one)
-{(run / 'chunks' / f"{ch['id']}.tells.md").read_text().strip()}
+{(run / 'chunks' / f"{ch['id']}.tells.md").read_text(encoding="utf-8").strip()}
 
 ## Hard constraints
 {HARD_CONSTRAINTS}
@@ -303,7 +303,7 @@ def sentence_lengths_of(text: str) -> list[int]:
 
 
 def revision_prompt(run: Path, st: dict, ch: dict, items: list[str], current: str) -> str:
-    src = (run / "chunks" / f"{ch['id']}.source.md").read_text().strip()
+    src = (run / "chunks" / f"{ch['id']}.source.md").read_text(encoding="utf-8").strip()
     sl = sentence_lengths_of(current)
     return f"""# Revise passage {ch['id']} (round {st['round'] + 1}) - voice `{st['voice']}`
 
@@ -319,10 +319,10 @@ Current sentence lengths in this passage (words): {', '.join(map(str, sl)) or 'n
 {tells_section(tells.scan_text(current)[0], len(current.split()), author_habits(load_profile(st)), st.get('allow_cuts', False))}
 
 ## Style brief (for reference)
-{(run / 'brief.md').read_text().split(chr(10), 2)[2].strip()}
+{(run / 'brief.md').read_text(encoding="utf-8").split(chr(10), 2)[2].strip()}
 
 ## Exemplars (style only)
-{(run / 'chunks' / f"{ch['id']}.exemplars.md").read_text().strip()}
+{(run / 'chunks' / f"{ch['id']}.exemplars.md").read_text(encoding="utf-8").strip()}
 
 ## Hard constraints
 {HARD_CONSTRAINTS}
@@ -382,7 +382,7 @@ def cmd_prepare(a) -> dict:
     for d in ("chunks", "prompts/r1", "rewrites", "rounds"):
         (run / d).mkdir(parents=True, exist_ok=True)
     write_json(run / "blocks.json", [b.__dict__ for b in blocks])
-    (run / "brief.md").write_text(br.style_brief(prof))
+    (run / "brief.md").write_text(br.style_brief(prof), encoding="utf-8")
     fmt = src.suffix.lower().lstrip(".")
     out_fmt = {"pdf": "md", "markdown": "md", "text": "txt"}.get(fmt, fmt)
     output = Path(a.output).expanduser().resolve() if a.output else src.with_name(f"{src.stem}.{a.voice}.{out_fmt}")
@@ -395,21 +395,21 @@ def cmd_prepare(a) -> dict:
     used: list[str] = []
     for ch in chunks:
         text = chunk_text(blocks, ch)
-        (run / "chunks" / f"{ch['id']}.source.md").write_text(text + "\n")
+        (run / "chunks" / f"{ch['id']}.source.md").write_text(text + "\n", encoding="utf-8")
         q = rt.describe_query(text, bank.fw_top, role=ch["role"])
         # mild cross-chunk diversity: avoid re-using exemplars of the previous two chunks
         exs = bank.query(q, N_EXEMPLARS, exclude_ids=used[-2 * N_EXEMPLARS:])
         used += [e["id"] for e in exs]
-        (run / "chunks" / f"{ch['id']}.exemplars.md").write_text(exemplars_md(exs) + "\n")
+        (run / "chunks" / f"{ch['id']}.exemplars.md").write_text(exemplars_md(exs) + "\n", encoding="utf-8")
         hits = tells.scan_blocks(chunk_blocks_with_heading(blocks, ch))
         ch["wrapper_only"] = wrapper_only_paras(blocks, ch)
         (run / "chunks" / f"{ch['id']}.tells.md").write_text(
-            tells_section(hits, ch["words"], author_habits(prof), st["allow_cuts"], ch["wrapper_only"]) + "\n")
-        (run / "prompts" / "r1" / f"{ch['id']}.md").write_text(initial_prompt(run, st, ch, text))
+            tells_section(hits, ch["words"], author_habits(prof), st["allow_cuts"], ch["wrapper_only"]) + "\n", encoding="utf-8")
+        (run / "prompts" / "r1" / f"{ch['id']}.md").write_text(initial_prompt(run, st, ch, text), encoding="utf-8")
     # round 0: the source itself
     src_md = assemble_markdown(blocks, {})
     (run / "rounds" / "0").mkdir(parents=True, exist_ok=True)
-    (run / "rounds" / "0" / "document.md").write_text(src_md)
+    (run / "rounds" / "0" / "document.md").write_text(src_md, encoding="utf-8")
     s0 = score_markdown(src_md, prof, cal)
     write_json(run / "rounds" / "0" / "score.json", s0)
     st["rounds"].append({"round": 0, "kind": "source", **{k: v for k, v in brief_score(s0).items() if k != "gaps"}})
@@ -480,7 +480,7 @@ def cmd_assemble(a) -> dict:
         if not p.exists():
             missing.append(ch["id"])
             continue
-        paras = split_paragraphs(p.read_text())
+        paras = split_paragraphs(p.read_text(encoding="utf-8"))
         if len(paras) != ch["paragraphs"]:
             bad.append(f"{ch['id']}: {len(paras)} paragraphs, source has {ch['paragraphs']}")
             continue
@@ -502,7 +502,7 @@ def cmd_assemble(a) -> dict:
     for ch in chunks:
         shutil.copy(run / "rewrites" / f"{ch['id']}.md", rdir / "rewrites" / f"{ch['id']}.md")
     md = assemble_markdown(blocks, replacement)
-    (rdir / "document.md").write_text(md)
+    (rdir / "document.md").write_text(md, encoding="utf-8")
     s = score_markdown(md, prof, cal, n_gaps=10)
     write_json(rdir / "score.json", s)
     rec = {"round": rnd, "kind": "rewrite" if rnd == 1 else "revision",
@@ -547,7 +547,7 @@ def cmd_assemble(a) -> dict:
         for ch in chunks:
             shutil.copy(run / "rounds" / str(base) / "rewrites" / f"{ch['id']}.md", run / "rewrites" / f"{ch['id']}.md")
         s = read_json(run / "rounds" / str(base) / "score.json")
-        texts = {ch["id"]: (run / "rewrites" / f"{ch['id']}.md").read_text() for ch in chunks}
+        texts = {ch["id"]: (run / "rewrites" / f"{ch['id']}.md").read_text(encoding="utf-8") for ch in chunks}
     gaps = s["gaps"][:GAPS_PER_ROUND]
     targets = chunk_attribution(prof, blocks, chunks, texts, gaps, s)
     pdir = run / "prompts" / f"r{rnd + 1}"
@@ -555,7 +555,7 @@ def cmd_assemble(a) -> dict:
     for cid, items in targets.items():
         ch = next(c for c in chunks if c["id"] == cid)
         lines = [f"{it['instruction']} [{it['detail']}]" for it in items]
-        (pdir / f"{cid}.md").write_text(revision_prompt(run, st, ch, lines, texts[cid]))
+        (pdir / f"{cid}.md").write_text(revision_prompt(run, st, ch, lines, texts[cid]), encoding="utf-8")
     write_json(run / "state.json", st)
     result.update({"status": "revise", "gaps": [g["instruction"] for g in gaps],
                    "revise_chunks": sorted(targets), "prompts": str(pdir),
@@ -565,8 +565,8 @@ def cmd_assemble(a) -> dict:
 
 
 def tells_line(before: Path, after: Path, habits: dict[str, float] | None = None) -> str:
-    h0, _ = tells.scan_text(before.read_text())
-    h1, w1 = tells.scan_text(after.read_text())
+    h0, _ = tells.scan_text(before.read_text(encoding="utf-8"))
+    h1, w1 = tells.scan_text(after.read_text(encoding="utf-8"))
     habits = habits or {}
     h0 = [h for h in h0 if h.pattern not in habits]
     h1 = [h for h in h1 if h.pattern not in habits]
@@ -639,7 +639,7 @@ def cmd_finalize(a) -> dict:
         p = run / "rewrites" / f"{ch['id']}.md"
         if not p.exists():
             p = best_dir / "rewrites" / f"{ch['id']}.md"
-        paras = split_paragraphs(p.read_text())
+        paras = split_paragraphs(p.read_text(encoding="utf-8"))
         if len(paras) != ch["paragraphs"]:
             raise SystemExit(f"{ch['id']}: paragraph count changed ({len(paras)} vs {ch['paragraphs']})")
         for i, t in zip(ch["blocks"], paras):
@@ -650,7 +650,7 @@ def cmd_finalize(a) -> dict:
     prof, cal = sc_mod.load_voice(st["voice"], st["genre"])
     fdir = run / "final"
     fdir.mkdir(exist_ok=True)
-    (fdir / "document.md").write_text(md)
+    (fdir / "document.md").write_text(md, encoding="utf-8")
     s = score_markdown(md, prof, cal)
     write_json(best_dir / "score.json", s)
     for r in st["rounds"]:
@@ -658,9 +658,9 @@ def cmd_finalize(a) -> dict:
             r.update({k: v for k, v in brief_score(s).items() if k != "gaps"})
     out = write_output(st, blocks, replacement, md)
     card = render_scorecard(run, st)
-    (run / "scorecard.md").write_text(card)
+    (run / "scorecard.md").write_text(card, encoding="utf-8")
     card_out = out.with_name(out.stem + ".scorecard.md")
-    card_out.write_text(card)
+    card_out.write_text(card, encoding="utf-8")
     write_json(run / "state.json", st)
     return {"output": str(out), "scorecard": str(card_out), "composite": s["composite"],
             "inside_band": s.get("inside_band"), "rhythm_inside_band": s.get("rhythm_inside_band"),

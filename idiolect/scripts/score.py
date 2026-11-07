@@ -619,7 +619,7 @@ def render(sc: dict, title: str = "") -> str:
 
 def recalibrate(voice: str, genre: str) -> dict:
     vd = voice_dir(voice, genre)
-    srcs = [l for l in (vd / "sources.txt").read_text().splitlines() if l.strip()]
+    srcs = [l for l in (vd / "sources.txt").read_text(encoding="utf-8").splitlines() if l.strip()]
     docs = [ex.extract(s) for s in srcs if Path(s).exists()]
     groups, names, cits, _ = vp.make_samples(docs)
     pcs = [vp.paragraph_counts(g) for g in groups]

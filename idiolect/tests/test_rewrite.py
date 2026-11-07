@@ -57,7 +57,7 @@ def _isolated_home():
 
 def test_rewrite_mode_keeps_apparatus(tmp_path):
     p = tmp_path / "paper.md"
-    p.write_text(PAPER)
+    p.write_text(PAPER, encoding="utf-8")
     doc = ex.extract(p, for_rewrite=True)
     kinds = [b.kind for b in doc.blocks]
     assert "protected" in kinds
@@ -88,13 +88,13 @@ def test_chunking_rules():
 @pytest.mark.slow
 def test_prepare_assemble_finalize_md(voice, tmp_path):
     src = tmp_path / "doc.md"
-    src.write_text(PAPER)
+    src.write_text(PAPER, encoding="utf-8")
     res = rw.cmd_prepare(Namespace(source=str(src), voice="gkc", genre="essay", rounds=1, output=None,
                                    run_dir=str(tmp_path / "run")))
     run = Path(res["run_dir"])
-    st = json.loads((run / "state.json").read_text())
+    st = json.loads((run / "state.json").read_text(encoding="utf-8"))
     assert res["chunks"] == len(st["chunks"]) >= 2
-    p1 = (run / "prompts" / "r1" / "c001.md").read_text()
+    p1 = (run / "prompts" / "r1" / "c001.md").read_text(encoding="utf-8")
     for section in ("## Style brief", "## Rhythm target", "## Exemplars", "## Hard constraints", "## SOURCE"):
         assert section in p1
     assert "{" not in p1.split("## Style brief")[1].split("## Rhythm")[0]   # no raw JSON
@@ -103,12 +103,12 @@ def test_prepare_assemble_finalize_md(voice, tmp_path):
     assert out["status"] == "incomplete" and out["missing"]
     # paragraph-count mismatch is rejected
     for ch in st["chunks"]:
-        (run / "rewrites" / f"{ch['id']}.md").write_text("one.\n\ntwo.\n\nthree.\n\nfour.")
+        (run / "rewrites" / f"{ch['id']}.md").write_text("one.\n\ntwo.\n\nthree.\n\nfour.", encoding="utf-8")
     out = rw.cmd_assemble(Namespace(run_dir=str(run)))
     assert out["status"] == "incomplete" and out["paragraph_mismatch"]
     # identity "rewrite" -> scores like the source; rounds=1 -> stops after one revision round at most
     for ch in st["chunks"]:
-        (run / "rewrites" / f"{ch['id']}.md").write_text((run / "chunks" / f"{ch['id']}.source.md").read_text())
+        (run / "rewrites" / f"{ch['id']}.md").write_text((run / "chunks" / f"{ch['id']}.source.md").read_text(encoding="utf-8"), encoding="utf-8")
     out = rw.cmd_assemble(Namespace(run_dir=str(run)))
     assert out["round"] == 1 and out["status"] in ("revise", "stop")
     if out["status"] == "revise":
@@ -116,7 +116,7 @@ def test_prepare_assemble_finalize_md(voice, tmp_path):
         out = rw.cmd_assemble(Namespace(run_dir=str(run)))
         assert out["status"] == "stop"
     fin = rw.cmd_finalize(Namespace(run_dir=str(run)))
-    text = Path(fin["output"]).read_text()
+    text = Path(fin["output"]).read_text(encoding="utf-8")
     assert "[3] A. Author. Some paper. 2019." in text and "$$ y" in text and "| 1 | 2 |" in text
     assert "NOT RUN" in fin["scorecard_md"]
     assert Path(fin["scorecard"]).exists()
@@ -137,11 +137,11 @@ def test_docx_in_place(voice, tmp_path):
     res = rw.cmd_prepare(Namespace(source=str(src), voice="gkc", genre="essay", rounds=0, output=None,
                                    run_dir=str(tmp_path / "run")))
     run = Path(res["run_dir"])
-    st = json.loads((run / "state.json").read_text())
+    st = json.loads((run / "state.json").read_text(encoding="utf-8"))
     for ch in st["chunks"]:
-        txt = (run / "chunks" / f"{ch['id']}.source.md").read_text().replace("which we did not expect",
+        txt = (run / "chunks" / f"{ch['id']}.source.md").read_text(encoding="utf-8").replace("which we did not expect",
                                                                               "which we had not expected")
-        (run / "rewrites" / f"{ch['id']}.md").write_text(txt)
+        (run / "rewrites" / f"{ch['id']}.md").write_text(txt, encoding="utf-8")
     assert rw.cmd_assemble(Namespace(run_dir=str(run)))["status"] == "stop"   # rounds=0
     fin = rw.cmd_finalize(Namespace(run_dir=str(run)))
     out = docx.Document(fin["output"])
